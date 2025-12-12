@@ -1,0 +1,42 @@
+I need to build a local-only Python application with a simple GUI.
+This app will never be deployed to a server - it's purely for local desktop use.
+
+**Tech Stack Requirements:**
+- **Backend:** Python 3.12+
+- **UI Framework:** CustomTkinter (modern, native-looking Tkinter wrapper with better styling)
+  - Alternative if CustomTkinter doesn't work: PyQt6 (more powerful but heavier)
+  - Fallback: Standard Tkinter (most compatible, basic styling)
+- **Project Structure:** Single-window application with clean separation between UI and business logic
+
+**Core Requirements:**
+- Single window interface with drag-and-drop support
+- Clean MVC/MVP architecture (UI separate from logic)
+- Type hints throughout
+- Virtual environment setup (venv)
+- Requirements.txt for dependencies
+- Simple setup instructions in README
+
+**Why CustomTkinter:**
+- Native Python, no external dependencies beyond pip
+- Modern, clean aesthetics out of the box
+- Built-in dark mode support
+- Excellent drag-and-drop support via tkinterdnd2
+- Lightweight and fast for local apps
+- No web server overhead
+
+Please create the initial project structure with:
+1. Main application entry point
+2. Separate UI module
+3. Separate business logic module
+4. Configuration for the virtual environment
+5. Basic window with placeholder for my specific requirements
+
+
+When the project template is setup, see the starting specifications in PRD.md and build a MVP working application.
+(Please clean up the formatting in the PRD if needed)
+
+A critical design choice you will need to make is the appropriate ML model that will underpin the application.
+Think deeply about this choice and implement it accordingly.  The app will rely heavily on a learning model trained
+on images of handwritten text.  Assume the user has the necessary paid accounts
+and can provide API keys if necessary for these LLM providers:  OpenAI, Grok, and Claude.  The user also has
+a paid account with Hugging Face, but pick the best tool for the job.  It's OK if it is not free.
