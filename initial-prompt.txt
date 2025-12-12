@@ -33,7 +33,7 @@ Please create the initial project structure with:
 
 
 When the project template is setup, see the starting specifications in PRD.md and build a MVP working application.
-(Please clean up the formatting in the PRD if needed)
+(Please modify and clean up the formatting in the PRD as needed)
 
 A critical design choice you will need to make is the appropriate ML model that will underpin the application.
 Think deeply about this choice and implement it accordingly.  The app will rely heavily on a learning model trained
