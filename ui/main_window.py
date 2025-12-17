@@ -6,7 +6,7 @@ Provides UI for training mode and quiz generation mode
 import customtkinter as ctk
 from tkinter import filedialog, messagebox
 from pathlib import Path
-from typing import Optional
+from typing import Dict, Optional
 from logic.quiz_generator import QuizGenerator
 from logic.model_trainer import ModelTrainer
 from logic.document_processor import DocumentProcessor
@@ -16,11 +16,11 @@ from config import Config
 class MainWindow:
     """Main application window with training and generation modes"""
 
-    def __init__(self):
+    def __init__(self, proxies: Optional[Dict] = None):
         """Initialize the main window"""
         self.config = Config()
-        self.quiz_generator = QuizGenerator(self.config)
-        self.model_trainer = ModelTrainer(self.config)
+        self.quiz_generator = QuizGenerator(self.config, proxies=proxies)
+        self.model_trainer = ModelTrainer(self.config, proxies=proxies)
         self.doc_processor = DocumentProcessor(self.config)
 
         # Initialize CustomTkinter
@@ -231,8 +231,9 @@ class MainWindow:
         # Instructions
         instructions = ctk.CTkLabel(
             self.content_frame,
-            text="Upload handwritten quiz images to train the model.\n"
-                 "The model will learn your quiz style and format.",
+            text="Upload handwritten quiz images or PDFs to train the model.\n"
+                 "The model will learn your quiz style and format.\n"
+                 "PDFs will be processed page by page.",
             font=ctk.CTkFont(size=12),
             text_color="gray"
         )
@@ -261,7 +262,7 @@ class MainWindow:
 
         add_btn = ctk.CTkButton(
             btn_frame,
-            text="➕ Add Training Image",
+            text="➕ Add Training Image/PDF",
             command=self._add_training_image,
             height=40
         )
@@ -375,30 +376,39 @@ class MainWindow:
         )
 
     def _add_training_image(self):
-        """Add a new training image"""
+        """Add a new training image or PDF"""
         filename = filedialog.askopenfilename(
-            title="Select Training Image",
+            title="Select Training Image or PDF",
             filetypes=[
+                ("All Supported", "*.png *.jpg *.jpeg *.pdf"),
                 ("Images", "*.png *.jpg *.jpeg"),
+                ("PDF Files", "*.pdf"),
                 ("All Files", "*.*")
             ]
         )
 
         if filename:
             try:
+                file_path = Path(filename)
+                file_type = "PDF" if file_path.suffix.lower() == '.pdf' else "image"
+
                 # Prompt for name
                 name = ctk.CTkInputDialog(
-                    text="Enter a unique name for this training image:",
-                    title="Training Image Name"
+                    text=f"Enter a unique name for this training {file_type}:",
+                    title=f"Training {file_type.title()} Name"
                 ).get_input()
 
                 if name:
-                    self.model_trainer.add_training_image(Path(filename), name)
+                    self.model_trainer.add_training_image(file_path, name)
                     self._refresh_training_images_list()
-                    messagebox.showinfo("Success", "Training image added successfully!")
+
+                    success_msg = f"Training {file_type} added successfully!"
+                    if file_type == "PDF":
+                        success_msg += "\nEach page will be analyzed during training."
+                    messagebox.showinfo("Success", success_msg)
 
             except Exception as e:
-                messagebox.showerror("Error", f"Failed to add training image:\n{str(e)}")
+                messagebox.showerror("Error", f"Failed to add training file:\n{str(e)}")
 
     def _train_model(self):
         """Train the model on training images"""
@@ -426,9 +436,11 @@ class MainWindow:
             label.pack(pady=20)
         else:
             for img_path in training_images:
+                # Use different icon for PDFs
+                icon = "📑" if img_path.suffix.lower() == '.pdf' else "📄"
                 img_label = ctk.CTkLabel(
                     self.training_images_frame,
-                    text=f"📄 {img_path.name}"
+                    text=f"{icon} {img_path.name}"
                 )
                 img_label.pack(pady=2, padx=5, anchor="w")
 

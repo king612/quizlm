@@ -47,19 +47,17 @@ class Config:
     def _validate_config(self):
         """Validate configuration"""
         # Check that at least one API key is configured
-        if self.llm_provider == "claude" and not self.anthropic_api_key:
-            raise ValueError(
-                "ANTHROPIC_API_KEY environment variable not set. "
-                "Please set it or change QUIZLM_LLM_PROVIDER."
-            )
-        elif self.llm_provider == "openai" and not self.openai_api_key:
-            raise ValueError(
-                "OPENAI_API_KEY environment variable not set. "
-                "Please set it or change QUIZLM_LLM_PROVIDER."
-            )
-        elif self.llm_provider == "grok" and not self.grok_api_key:
-            raise ValueError(
-                "GROK_API_KEY environment variable not set. "
-                "Please set it or change QUIZLM_LLM_PROVIDER."
-            )
+        api_key_map = {
+            "claude": (self.anthropic_api_key, "ANTHROPIC_API_KEY"),
+            "openai": (self.openai_api_key, "OPENAI_API_KEY"),
+            "grok": (self.grok_api_key, "GROK_API_KEY"),
+        }
+        
+        if self.llm_provider in api_key_map:
+            api_key, env_var_name = api_key_map[self.llm_provider]
+            if not api_key:
+                raise ValueError(
+                    f"{env_var_name} environment variable not set. "
+                    f"Please set it or change QUIZLM_LLM_PROVIDER."
+                )
 

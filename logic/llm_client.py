@@ -17,27 +17,66 @@ try:
 except ImportError:
     OpenAI = None
 
+try:
+    import httpx
+except ImportError:
+    httpx = None
+
 from config import Config
 
 
 class LLMClient:
     """Client for interacting with LLM services (Claude, OpenAI)"""
 
-    def __init__(self, config: Config):
+    def __init__(self, config: Config, proxies: Optional[Dict] = None):
         self.config = config
         self.provider = config.llm_provider
+        self.proxies = proxies
+
+        # Create http_client with proxies if needed
+        http_client = None
+        if proxies:
+            if httpx is None:
+                raise ImportError("httpx not installed. Install with: pip install httpx")
+            http_client = httpx.Client(proxy=proxies)
 
         # Initialize appropriate client
         if self.provider == "claude":
             if Anthropic is None:
                 raise ImportError("anthropic not installed. Install with: pip install anthropic")
-            self.client = Anthropic(api_key=config.anthropic_api_key)
+            client_kwargs = {"api_key": config.anthropic_api_key}
+            if http_client:
+                client_kwargs["http_client"] = http_client
+            self.client = Anthropic(**client_kwargs)
         elif self.provider == "openai":
             if OpenAI is None:
                 raise ImportError("openai not installed. Install with: pip install openai")
-            self.client = OpenAI(api_key=config.openai_api_key)
+            client_kwargs = {"api_key": config.openai_api_key}
+            if http_client:
+                client_kwargs["http_client"] = http_client
+            self.client = OpenAI(**client_kwargs)
         else:
             raise ValueError(f"Unsupported LLM provider: {self.provider}")
+
+    def _extract_json_from_response(self, text: str) -> dict:
+        """Extract and parse JSON from LLM response text.
+        
+        Args:
+            text: Response text that may contain JSON
+            
+        Returns:
+            Parsed JSON dictionary
+            
+        Raises:
+            json.JSONDecodeError: If JSON parsing fails
+        """
+        # Extract JSON if embedded in markdown code block
+        if "```json" in text:
+            json_start = text.find("```json") + 7
+            json_end = text.find("```", json_start)
+            text = text[json_start:json_end].strip()
+        
+        return json.loads(text)
 
     def analyze_quiz_image(self, image_path: Path) -> dict:
         """
@@ -126,13 +165,7 @@ Be specific and detailed. This information will be used to generate new quizzes 
 
         # Try to parse as JSON, fallback to text
         try:
-            # Extract JSON if embedded in text
-            if "```json" in analysis_text:
-                json_start = analysis_text.find("```json") + 7
-                json_end = analysis_text.find("```", json_start)
-                analysis_text = analysis_text[json_start:json_end].strip()
-
-            return json.loads(analysis_text)
+            return self._extract_json_from_response(analysis_text)
         except json.JSONDecodeError:
             # Return as raw text if not valid JSON
             return {"raw_analysis": analysis_text}
@@ -218,12 +251,7 @@ Generate a high-quality, educationally valuable quiz. Return ONLY the JSON objec
 
         # Parse JSON response
         try:
-            if "```json" in content:
-                json_start = content.find("```json") + 7
-                json_end = content.find("```", json_start)
-                content = content[json_start:json_end].strip()
-
-            return json.loads(content)
+            return self._extract_json_from_response(content)
         except json.JSONDecodeError as e:
             raise ValueError(f"Failed to parse LLM response as JSON: {e}\nResponse: {content[:500]}")
 

@@ -3,7 +3,7 @@ Quiz generation logic using LLM-based approach
 """
 
 from pathlib import Path
-from typing import Optional
+from typing import Dict, Optional
 from datetime import datetime
 import json
 
@@ -16,10 +16,10 @@ from config import Config
 class QuizGenerator:
     """Handles quiz generation from source materials"""
 
-    def __init__(self, config: Config):
+    def __init__(self, config: Config, proxies: Optional[Dict] = None):
         self.config = config
         self.doc_processor = DocumentProcessor(config)
-        self.llm_client = LLMClient(config)
+        self.llm_client = LLMClient(config, proxies=proxies)
         self.pdf_generator = PDFGenerator(config)
 
     def generate_quiz(
