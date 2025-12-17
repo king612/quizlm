@@ -117,7 +117,7 @@ Be specific and detailed. This information will be used to generate new quizzes 
 
         if self.provider == "claude":
             response = self.client.messages.create(
-                model="claude-3-5-sonnet-20240620",
+                model="claude-3-5-sonnet-latest",
                 max_tokens=5000,
                 messages=[{
                     "role": "user",
@@ -227,7 +227,7 @@ Generate a high-quality, educationally valuable quiz. Return ONLY the JSON objec
 
         if self.provider == "claude":
             response = self.client.messages.create(
-                model="claude-3-5-sonnet-20240620",
+                model="claude-3-5-sonnet-latest",
                 max_tokens=4000,
                 messages=[{
                     "role": "user",

@@ -5,12 +5,16 @@ Configuration management for QuizLM
 import os
 from pathlib import Path
 from typing import Optional
+from dotenv import load_dotenv
 
 
 class Config:
     """Application configuration"""
 
     def __init__(self):
+        # Load environment variables from .env file
+        load_dotenv()
+
         # Base directories
         self.project_root = Path(__file__).parent
         self.data_dir = self.project_root / "data"
@@ -52,7 +56,7 @@ class Config:
             "openai": (self.openai_api_key, "OPENAI_API_KEY"),
             "grok": (self.grok_api_key, "GROK_API_KEY"),
         }
-        
+
         if self.llm_provider in api_key_map:
             api_key, env_var_name = api_key_map[self.llm_provider]
             if not api_key:
