@@ -60,13 +60,13 @@ class LLMClient:
 
     def _extract_json_from_response(self, text: str) -> dict:
         """Extract and parse JSON from LLM response text.
-        
+
         Args:
             text: Response text that may contain JSON
-            
+
         Returns:
             Parsed JSON dictionary
-            
+
         Raises:
             json.JSONDecodeError: If JSON parsing fails
         """
@@ -75,7 +75,7 @@ class LLMClient:
             json_start = text.find("```json") + 7
             json_end = text.find("```", json_start)
             text = text[json_start:json_end].strip()
-        
+
         return json.loads(text)
 
     def analyze_quiz_image(self, image_path: Path) -> dict:
@@ -117,8 +117,8 @@ Be specific and detailed. This information will be used to generate new quizzes 
 
         if self.provider == "claude":
             response = self.client.messages.create(
-                model="claude-3-5-sonnet-20241022",
-                max_tokens=2000,
+                model="claude-3-5-sonnet-20240620",
+                max_tokens=5000,
                 messages=[{
                     "role": "user",
                     "content": [
@@ -227,7 +227,7 @@ Generate a high-quality, educationally valuable quiz. Return ONLY the JSON objec
 
         if self.provider == "claude":
             response = self.client.messages.create(
-                model="claude-3-5-sonnet-20241022",
+                model="claude-3-5-sonnet-20240620",
                 max_tokens=4000,
                 messages=[{
                     "role": "user",
