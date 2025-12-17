@@ -133,16 +133,26 @@ The system will analyze your handwritten quizzes and extract:
    - Paste text directly
 3. Enter a unique quiz name
 4. Select difficulty: Easy, Medium, or Hard
-5. Click **"🎯 Generate Quiz"**
+5. Select quiz layout: Split Page or Full Page
+6. Click **"🎯 Generate Quiz"**
 
 Your quiz will be generated as a PDF in the `data/quizzes/` folder.
 
-### Quiz Format
+### Quiz Format Options
 
-Generated PDFs have:
+**Split Page Layout:**
 - **Left side**: Quiz with blanks (underscores)
 - **Right side**: Answers aligned with questions
-- **Verdana 12pt** font with narrow margins
+- Traditional two-column format
+
+**Full Page Layout:**
+- **Quiz pages**: Quiz questions use full page width
+- **Answer pages**: Separate answer key at end of PDF
+- Answers formatted with spacing for easier grading
+- Ideal for longer quizzes or figure-based content
+
+**Both formats use:**
+- **Helvetica 12pt** font with narrow margins
 - Professional, clean layout
 
 ## Project Structure

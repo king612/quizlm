@@ -76,8 +76,11 @@ python main.py
    - Paste text directly into the text box
 3. Enter a quiz name (e.g., "biology-chapter-3")
 4. Select difficulty: **Easy**, **Medium**, or **Hard**
-5. Click **"🎯 Generate Quiz"**
-6. Your quiz PDF will be saved to `data/quizzes/`
+5. Select quiz layout: **Split Page** or **Full Page**
+   - Split Page: Quiz on left, answers on right (side-by-side)
+   - Full Page: Quiz uses full width, answers on separate pages at end
+6. Click **"🎯 Generate Quiz"**
+7. Your quiz PDF will be saved to `data/quizzes/`
 
 ### 3. View Your Quizzes
 
@@ -92,6 +95,9 @@ python main.py
   - Easy = Fewer blanks, more hints
   - Medium = Balanced (mimics your training examples)
   - Hard = More blanks, fewer hints
+- **Layout:**
+  - Split Page = Side-by-side quiz and answers (traditional)
+  - Full Page = Full-width quiz, separate answer pages (better for longer content)
 - **File Formats:** PDF, Word (.docx), images (.png, .jpg), plain text (.txt)
 
 ## Troubleshooting

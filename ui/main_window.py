@@ -151,6 +151,30 @@ class MainWindow:
         )
         difficulty_selector.pack(fill="x")
 
+        # Quiz style selector
+        style_frame = ctk.CTkFrame(right_panel, fg_color="transparent")
+        style_frame.pack(pady=10, padx=10, fill="x")
+
+        style_label = ctk.CTkLabel(style_frame, text="Quiz Layout:")
+        style_label.pack(anchor="w", pady=(0, 5))
+
+        self.quiz_style_var = ctk.StringVar(value="Split Page")
+        style_selector = ctk.CTkSegmentedButton(
+            style_frame,
+            values=["Split Page", "Full Page"],
+            variable=self.quiz_style_var
+        )
+        style_selector.pack(fill="x")
+
+        # Help text for style
+        style_help = ctk.CTkLabel(
+            style_frame,
+            text="Split: Quiz|Answers side-by-side\nFull: Answers on separate pages",
+            font=ctk.CTkFont(size=10),
+            text_color="gray"
+        )
+        style_help.pack(anchor="w", pady=(5, 0))
+
         # Status section
         status_frame = ctk.CTkFrame(right_panel)
         status_frame.pack(pady=20, padx=10, fill="x")
@@ -298,8 +322,9 @@ class MainWindow:
             messagebox.showerror("Error", "Please provide source material (text or file)")
             return
 
-        # Get difficulty
+        # Get difficulty and style
         difficulty = self.difficulty_var.get()
+        quiz_style = self.quiz_style_var.get()
 
         # Update status
         self.status_label.configure(text="Generating quiz...")
@@ -312,7 +337,8 @@ class MainWindow:
                 quiz_name=quiz_name,
                 source_file=self.current_source_file,
                 source_text=text_content if text_content else None,
-                difficulty=difficulty
+                difficulty=difficulty,
+                quiz_style=quiz_style
             )
 
             self.status_label.configure(text=f"✓ Quiz generated: {output_path.name}")

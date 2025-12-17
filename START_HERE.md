@@ -129,8 +129,9 @@ quizlm/
 2. Upload a file or paste text
 3. Enter quiz name
 4. Select difficulty
-5. Click **"Generate Quiz"**
-6. Find PDF in `data/quizzes/`
+5. Select layout (Split Page or Full Page)
+6. Click **"Generate Quiz"**
+7. Find PDF in `data/quizzes/`
 
 ---
 
@@ -144,7 +145,10 @@ quizlm/
 ### Generate Mode
 - Accepts: text, PDF, Word docs, images
 - Three difficulties: Easy, Medium, Hard
-- PDF output: quiz | answers side-by-side
+- Two layout options: Split Page, Full Page
+- PDF output formats:
+  - **Split Page:** quiz | answers side-by-side
+  - **Full Page:** quiz full-width, answers on separate pages
 - Smart word selection (prioritizes concepts)
 - Automatic hint letters based on difficulty
 

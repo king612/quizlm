@@ -83,6 +83,11 @@ Need to accelerate learning speed by rapidly creating new, high-quality quizzes.
 **I want to** select difficulty level (Easy, Medium, Hard) when generating
 **So that** quizzes match my current learning needs and challenge level
 
+#### US-7: Choose Quiz Layout Style
+**As a** learner
+**I want to** select between Split Page (side-by-side) or Full Page layout
+**So that** generated quizzes match the format of my handwritten examples
+
 ---
 
 ## 5. Functional Requirements
@@ -135,29 +140,47 @@ Need to accelerate learning speed by rapidly creating new, high-quality quizzes.
 **Requirements:**
 - **REQ-3.1:** Generate quiz via UI button after providing source material
 - **REQ-3.2:** Provide difficulty selector: Easy, Medium (default), Hard
-- **REQ-3.3:** Generate PDF output saved to `data/quizzes/` folder
-- **REQ-3.4:** *(Future)* Display PDF preview in application
-- **REQ-3.5:** Use two-column layout:
+- **REQ-3.3:** Provide quiz layout selector: Split Page (default), Full Page
+  - **Split Page:** Two-column layout with quiz on left, answers on right (aligned vertically)
+  - **Full Page:** Quiz takes full page width, answer key on separate pages at end
+- **REQ-3.4:** Generate PDF output saved to `data/quizzes/` folder
+- **REQ-3.5:** *(Future)* Display PDF preview in application
+
+**Split Page Layout Requirements:**
+- **REQ-3.6-SP:** Use two-column layout:
   - Faint vertical center line
   - Left column: Quiz with blanks
   - Right column: Answers (vertically aligned)
-- **REQ-3.6:** PDF formatting:
-  - Font: Verdana, 12pt
+
+**Full Page Layout Requirements:**
+- **REQ-3.6-FP:** Quiz section:
+  - Quiz questions use full page width
+  - Questions numbered sequentially
+  - Normal pagination when needed
+- **REQ-3.6-FP-ANSWERS:** Answer key section:
+  - Answer key starts on new page after all quiz questions
+  - Title: "ANSWER KEY" at top of page
+  - Format: "1.    answer    " (4 spaces padding on each side for readability)
+  - Answer key continues on additional pages if needed
+
+**General PDF Formatting:**
+- **REQ-3.7:** PDF formatting:
+  - Font: Helvetica, 12pt (changed from Verdana for better compatibility)
   - Narrow margins (0.5 inch)
   - Clean, readable layout
-- **REQ-3.7:** Blank formatting:
+- **REQ-3.8:** Blank formatting:
   - Replace selected words with underscores matching word length
   - Optionally provide hint letters (first/last characters)
   - Hint letters reduce underscore count to preserve length
-- **REQ-3.8:** Difficulty adjustment:
+- **REQ-3.9:** Difficulty adjustment:
   - **Easy:** Fewer blanks (30-40% of key words), more hints (1-2 starting letters)
   - **Medium:** Moderate blanks (50-60%), occasional hints (first letter sometimes)
   - **Hard:** More blanks (70-80%), minimal/no hints
-- **REQ-3.9:** Word selection rules:
+- **REQ-3.10:** Word selection rules:
   - **Never blank:** Articles (a, an, the), prepositions, conjunctions, common filler words, headings
   - **Prioritize blanking:** Nouns with semantic meaning, key concepts, technical terms, important verbs/adjectives
   - Focus on educationally valuable content
-- **REQ-3.10:** *(Stretch Goal)* For diagram images: Generate quiz and answer key on separate pages
+- **REQ-3.11:** *(Stretch Goal)* For diagram images: Generate quiz and answer key on separate pages
 
 ## 6. Technical Architecture
 
@@ -202,7 +225,8 @@ Generation Mode:
 ✅ Style analysis using Claude Vision or GPT-4 Vision
 ✅ Support for text, PDF, DOCX, image inputs
 ✅ Three difficulty levels
-✅ PDF generation with two-column layout
+✅ Two quiz layout options: Split Page and Full Page
+✅ PDF generation with split-page (side-by-side) or full-page layouts
 ✅ Quiz name validation and duplicate checking
 ✅ View existing quizzes list
 

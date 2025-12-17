@@ -27,7 +27,8 @@ class QuizGenerator:
         quiz_name: str,
         source_file: Optional[Path] = None,
         source_text: Optional[str] = None,
-        difficulty: str = "Medium"
+        difficulty: str = "Medium",
+        quiz_style: str = "Split Page"
     ) -> Path:
         """
         Generate a quiz from source material
@@ -37,6 +38,7 @@ class QuizGenerator:
             source_file: Path to source document (PDF, DOCX, image, text)
             source_text: Raw text content (alternative to source_file)
             difficulty: Quiz difficulty (Easy, Medium, Hard)
+            quiz_style: Quiz layout style (Split Page, Full Page)
 
         Returns:
             Path to generated PDF quiz
@@ -70,11 +72,12 @@ class QuizGenerator:
         self.pdf_generator.create_quiz_pdf(
             quiz_data=quiz_data,
             output_path=output_path,
-            quiz_name=quiz_name
+            quiz_name=quiz_name,
+            quiz_style=quiz_style
         )
 
         # Save metadata
-        self._save_quiz_metadata(quiz_name, quiz_data, difficulty)
+        self._save_quiz_metadata(quiz_name, quiz_data, difficulty, quiz_style)
 
         return output_path
 
@@ -98,7 +101,7 @@ class QuizGenerator:
         with open(style_file, 'r') as f:
             return json.load(f)
 
-    def _save_quiz_metadata(self, quiz_name: str, quiz_data: dict, difficulty: str):
+    def _save_quiz_metadata(self, quiz_name: str, quiz_data: dict, difficulty: str, quiz_style: str = "Split Page"):
         """Save metadata about generated quiz"""
         metadata_dir = self.config.data_dir / "quiz_metadata"
         metadata_dir.mkdir(parents=True, exist_ok=True)
@@ -106,6 +109,7 @@ class QuizGenerator:
         metadata = {
             "name": quiz_name,
             "difficulty": difficulty,
+            "quiz_style": quiz_style,
             "generated_at": datetime.now().isoformat(),
             "num_questions": len(quiz_data.get("questions", [])),
         }
