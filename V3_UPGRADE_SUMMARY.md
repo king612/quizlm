@@ -50,7 +50,7 @@ In v2.1, we asked the LLM to:
 ### 2. Precise Hint Letter Control ✓
 ```python
 Easy:   max(1, min(4, length * 45%))  # 40-50% of word shown
-Medium: max(1, min(3, length * 27%))  # 25-30% of word shown  
+Medium: max(1, min(3, length * 27%))  # 25-30% of word shown
 Hard:   1                              # First letter only
 ```
 
@@ -87,7 +87,7 @@ Phase 2 implementation - Local quiz building
 ### `test_v3_architecture.py` (NEW)
 Comprehensive test suite
 - Tests Phase 1 (word selection)
-- Tests Phase 2 (quiz building) 
+- Tests Phase 2 (quiz building)
 - Tests integrated workflow
 - Validates blank formatting precision
 

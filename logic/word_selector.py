@@ -64,11 +64,11 @@ class WordSelector:
     ) -> Dict:
         """
         Ask LLM to identify educationally valuable words to blank
-        
+
         Args:
             source_content: The text to analyze
             difficulty: Easy, Medium, or Hard
-            
+
         Returns:
             Dictionary with:
                 - words_to_blank: List of word objects with word, importance, context
@@ -175,17 +175,17 @@ Return ONLY the JSON object, with no explanatory text before or after."""
         # Parse JSON response
         try:
             result = self._extract_json_from_response(content)
-            
+
             # Validate result structure
             if "words_to_blank" not in result:
                 raise ValueError("LLM response missing 'words_to_blank' field")
-            
+
             # Add metadata
             result["raw_response"] = content
             result["source_length"] = len(source_content)
-            
+
             return result
-            
+
         except json.JSONDecodeError as e:
             raise ValueError(f"Failed to parse LLM response as JSON: {e}\nResponse: {content[:500]}")
 
@@ -200,8 +200,8 @@ Return ONLY the JSON object, with no explanatory text before or after."""
             # Look for JSON object by finding first { and last }
             first_brace = text.find("{")
             last_brace = text.rfind("}")
-            
+
             if first_brace != -1 and last_brace != -1 and last_brace > first_brace:
                 text = text[first_brace:last_brace + 1].strip()
-        
+
         return json.loads(text)

@@ -79,7 +79,7 @@ class QuizGenerator:
             source_content=content,
             difficulty=difficulty
         )
-        
+
         num_selected = len(word_selection.get('words_to_blank', []))
         coverage = word_selection.get('estimated_coverage', 0)
         print(f"✓ Selected {num_selected} words to blank (~{coverage*100:.1f}% coverage)")
@@ -92,10 +92,10 @@ class QuizGenerator:
             words_to_blank=word_selection['words_to_blank'],
             max_occurrences_per_word=2  # Blank each word max 2 times
         )
-        
+
         metadata = quiz_result['metadata']
         print(f"✓ Created {metadata['total_blanks']} blanks ({metadata['coverage_percentage']}% of words)")
-        
+
         # Convert to format expected by PDF generator
         quiz_data = {
             "quiz_title": quiz_name,
