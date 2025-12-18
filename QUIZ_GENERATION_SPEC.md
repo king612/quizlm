@@ -18,36 +18,53 @@ QuizLM generates **full-document cloze-deletion quizzes** that replicate entire 
 - ❌ Multiple choice or other question formats
 - ❌ Selective excerpts from the source material
 
-## Generation Strategy
+## Generation Strategy (v3.0 - 2-Phase Architecture)
+
+### Two-Phase Approach
+
+QuizLM v3.0 uses a **hybrid approach** that separates semantic reasoning (where LLMs excel) from precise formatting (where code excels):
+
+**Phase 1: LLM Semantic Analysis**
+- LLM analyzes source text for educational value
+- Identifies which words/terms should be tested
+- Returns structured list of words with importance scores
+- No formatting involved - pure content analysis
+
+**Phase 2: Local Quiz Building**
+- Python code builds quiz with selected words
+- Deterministic blank generation with exact proportions
+- GUARANTEED: Exactly 2 underscores per missing letter
+- Precise hint letter control based on difficulty
+- Reliable, testable, and debuggable
 
 ### Document Processing
 
 1. **Input**: Accept source documents in various formats (PDF, DOCX, TXT, images)
 2. **Text Extraction**: Extract all text content while preserving structure
-3. **Full Replication**: Pass entire document content to LLM for blanking
-4. **No Truncation**: For long documents, use full context within token limits
+3. **Phase 1 - Word Selection**: LLM identifies educationally valuable terms
+4. **Phase 2 - Quiz Assembly**: Local code builds quiz with precise formatting
 
 ### Blanking Strategy
 
-The LLM strategically blanks out terms based on difficulty level:
+Words are selected by the LLM based on educational value, then formatted locally:
 
-#### Easy (10-15% blanking)
-- Fewer blanks overall
-- Focus on most critical terminology
-- ALWAYS provide 1-2 hint letters (first or last)
-- Example: "The m____________________ is the powerhouse of the cell"
+#### Easy (15-20% blanking)
+- Fewer blanks overall - focus on most critical terminology
+- Show 40-50% of each word as hints (e.g., "mito______________" for "mitochondria")
+- Example: "The mito______________ is the powe____________ of the cell"
+- Hint algorithm: max(1, min(4, length * 45%)) letters shown
 
-#### Medium (15-25% blanking)
-- Moderate number of blanks
-- Mix of key terms and supporting concepts
-- Provide hints for ~50% of blanks
-- Example: "The mitochondria is the p________________ of the ____________"
+#### Medium (25-35% blanking)
+- Moderate number of blanks - key terms and supporting concepts
+- Show 25-30% of each word as hints (e.g., "mi__________________" for "mitochondria")
+- Example: "The mi____________________ is the po________________ of the ce______"
+- Hint algorithm: max(1, min(3, length * 27%)) letters shown
 
-#### Hard (25-35% blanking)
-- More aggressive blanking
-- Most key terms are blanked
-- Provide hints for ~20% of blanks
-- Example: "The ____________________ is the __________________ of the ________"
+#### Hard (40-50% blanking)
+- Aggressive blanking - most key terms blanked
+- Show first letter only (e.g., "m________________________" for "mitochondria")
+- Example: "The m________________________ is the p__________________ of the c______"
+- Hint algorithm: 1 letter shown for most words
 
 ### What Gets Blanked
 
@@ -143,55 +160,118 @@ The LLM returns a JSON object with this structure:
 
 **Use Case:** Quick review sessions, flash-card style study
 
-## LLM Prompt Strategy
+## Phase 1: LLM Word Selection
 
-### Critical Instructions
+### Prompt Strategy
 
-The prompt to the LLM emphasizes:
+The LLM is asked to perform **pure semantic analysis** without any formatting concerns:
 
-1. **"REPLICATE THE ENTIRE SOURCE DOCUMENT"** - Not "create questions about"
-2. **"DO NOT SUMMARIZE"** - Include all content
-3. **"PRESERVE STRUCTURE"** - Keep paragraphs, sections, organization
-4. **"DO NOT NUMBER AS QUESTIONS"** - This is continuous text
-5. **"STRATEGIC BLANKING"** - Insert blanks throughout based on difficulty
+1. **"IDENTIFY EDUCATIONALLY VALUABLE WORDS"** - Focus on learning value
+2. **"CONSIDER PEDAGOGICAL IMPORTANCE"** - Which words test understanding?
+3. **"RETURN STRUCTURED JSON"** - List of words with importance scores
+4. **"NO FORMATTING REQUIRED"** - LLM doesn't generate blanks or underscores
+
+### LLM Output Format
+
+```json
+{
+  "words_to_blank": [
+    {
+      "word": "mitochondria",
+      "importance": 0.95,
+      "word_type": "key_concept",
+      "first_occurrence_context": "The mitochondria is the..."
+    }
+  ],
+  "difficulty": "Medium",
+  "estimated_coverage": 0.30,
+  "total_words_selected": 25
+}
+```
 
 ### Token Management
 
-For long documents:
-- Calculate appropriate `max_tokens` based on source length
-- Use formula: `min(16000, max(4000, content_length * 2))`
-- Haiku model supports up to 16k output tokens
-- For very long documents (>50 pages), may need chunking or model upgrade
+Much simpler than v2.x:
+- LLM only returns word list (not full document)
+- Typical output: 100-500 tokens (vs 2000-4000 in v2.x)
+- No truncation issues - word lists are small
+- Faster and cheaper API calls
+
+## Phase 2: Local Quiz Building
+
+### Quiz Builder Algorithm
+
+Local Python code (`quiz_builder.py`) handles all formatting:
+
+1. **Word Matching**
+   - Find all occurrences of selected words in source text
+   - Case-insensitive matching with case preservation
+   - Handle word boundaries and punctuation correctly
+
+2. **Blank Generation**
+   - Calculate hint letters based on difficulty algorithm
+   - Generate EXACTLY 2 underscores per missing letter
+   - Example: "mitochondria" (13 letters) with 4 hint → "mito__________________" (4 + 18 underscores)
+
+3. **Text Assembly**
+   - Replace words with blanks in source text
+   - Preserve all formatting, punctuation, spacing
+   - Track positions to avoid overlapping blanks
+   - Limit replacements (max 2 occurrences per word)
+
+4. **Answer Key Generation**
+   - Sequential list of blanked words
+   - Include metadata (importance, word type, position)
+
+### Hint Letter Algorithm
+
+```python
+def calculate_hint_count(word_length, difficulty):
+    if difficulty == "Easy":
+        return max(1, min(4, word_length * 45 // 100))
+    elif difficulty == "Medium":
+        return max(1, min(3, word_length * 27 // 100))
+    else:  # Hard
+        return 1
+```
+
+### Advantages of v3.0 Architecture
+
+1. **Deterministic Output** - Always exactly 2 underscores per letter
+2. **Fast Iteration** - Change algorithms without LLM calls
+3. **Cheaper** - Simpler prompts, smaller outputs
+4. **Debuggable** - Fix formatting in code, not prompts
+5. **Testable** - Unit test blank generation
+6. **Reliable** - No more inconsistent LLM formatting
 
 ## Implementation Details
 
-### Components Modified
+### New Components (v3.0)
 
-1. **`logic/llm_client.py`**
-   - Updated `generate_quiz_content()` with new comprehensive prompt
-   - Dynamic token allocation based on content length
-   - New JSON structure for paragraphs + answer_key
+1. **`logic/word_selector.py`** (NEW)
+   - Phase 1: LLM-based word selection
+   - Simple prompt focused on semantic analysis
+   - Returns JSON with word list and importance scores
 
-2. **`logic/pdf_generator.py`**
-   - Modified `_create_full_page_quiz()` to render paragraphs sequentially
-   - Modified `_create_split_page_quiz()` to handle continuous text format
-   - Backward compatibility with old question format
-   - Better spacing and typography (11pt font)
+2. **`logic/quiz_builder.py`** (NEW)
+   - Phase 2: Deterministic quiz assembly
+   - Precise blank generation with configurable hints
+   - Text processing and answer key formatting
 
-3. **`ui/main_window.py`**
-   - Changed default quiz style from "Split Page" to "Full Page"
-   - Reordered style selector to show Full Page first
+3. **`logic/quiz_generator.py`** (UPDATED)
+   - Orchestrates 2-phase workflow
+   - Calls word_selector, then quiz_builder
+   - Converts result to PDF-ready format
 
-4. **`logic/quiz_generator.py`**
-   - Updated metadata tracking for new format
-   - Changed default quiz style parameter to "Full Page"
+4. **`logic/pdf_generator.py`** (UNCHANGED)
+   - Same rendering logic as v2.x
+   - Works with paragraphs + answer_key structure
 
-### Backward Compatibility
+### Removed/Deprecated
 
-The PDF generator includes fallback logic:
-- If `paragraphs` key exists, use new format
-- If only `questions` key exists, convert to paragraph format
-- Ensures old quizzes still render correctly
+- **`logic/llm_client.py`** - Old `generate_quiz_content()` method no longer used
+- **Style training** - No longer needed (formatting is deterministic)
+- **VLM image analysis** - Removed (not needed for v3.0)
 
 ## Usage Examples
 
@@ -297,14 +377,21 @@ A well-generated quiz should:
   - Enhanced PDF rendering
   - Full Page as default
   - Dynamic token allocation
-- **v2.1** (Current): Handwriting-optimized format
-  - Proportional blank sizing (2 underscores per letter)
+- **v2.1**: Handwriting-optimized format (LLM-based)
+  - Attempted proportional blank sizing via LLM instructions
   - Mandatory hint letters based on difficulty
   - Simplified answer key (flowing paragraphs, 4-space separation)
-  - Optimized for handwritten quiz taking
+  - Status: Unreliable - LLMs can't count underscores precisely
+- **v3.0** (Current): 2-Phase Hybrid Architecture
+  - Phase 1: LLM semantic word selection (what to blank)
+  - Phase 2: Local deterministic quiz building (how to format)
+  - GUARANTEED proportional blanks (exactly 2 underscores per letter)
+  - Precise hint letter algorithms based on difficulty
+  - Faster, cheaper, more reliable than v2.x
+  - Separation of concerns: semantic reasoning vs. formatting
 
 ---
 
-**Document Version:** 2.1
+**Document Version:** 3.0
 **Last Updated:** December 18, 2024
 **Status:** Active Implementation
