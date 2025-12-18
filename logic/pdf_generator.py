@@ -261,36 +261,23 @@ class PDFGenerator:
         # Reset to normal font
         c.setFont("Helvetica", 11)
 
-        # List answers in order
-        answer_num = 1
-        for ans in answer_key:
-            # Check if we need a new page
-            if y_pos < margin + 50:
+        # Create answer text as flowing paragraphs with 4 spaces between words
+        # No numbers, no context - just the words
+        answer_words = [ans.get("answer", "") for ans in answer_key]
+        answer_paragraph = "    ".join(answer_words)  # 4 spaces between each word
+
+        # Wrap the paragraph to page width
+        wrapped_answers = self._wrap_text(answer_paragraph, full_width, c, 11)
+
+        # Render the answer paragraph
+        for line in wrapped_answers:
+            if y_pos < margin + 30:
                 c.showPage()
                 y_pos = height - margin
                 c.setFont("Helvetica", 11)
 
-            # Format answer with context if available
-            answer = ans.get("answer", "")
-            context = ans.get("context", "")
-
-            if context:
-                answer_text = f"{answer_num}. {answer}  ({context})"
-            else:
-                answer_text = f"{answer_num}. {answer}"
-
-            # Wrap if too long
-            wrapped_answer = self._wrap_text(answer_text, full_width, c, 11)
-            for line in wrapped_answer:
-                if y_pos < margin + 30:
-                    c.showPage()
-                    y_pos = height - margin
-                    c.setFont("Helvetica", 11)
-                c.drawString(margin, y_pos, line)
-                y_pos -= 14
-
-            y_pos -= 6  # Small gap between answers
-            answer_num += 1
+            c.drawString(margin, y_pos, line)
+            y_pos -= 14
 
         # Footer on answer page
         c.setFont("Helvetica", 8)

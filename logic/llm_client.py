@@ -234,9 +234,9 @@ CRITICAL REQUIREMENTS:
 5. DO NOT NUMBER AS QUESTIONS - This is continuous text with blanks, not a numbered question list
 
 BLANKING STRATEGY:
-- Easy: Blank ~10-15% of key terms, provide first or last 1-2 letters as hints
-- Medium: Blank ~15-25% of key terms, occasional first or last letter hints
-- Hard: Blank ~25-35% of key terms, minimal hints
+- Easy: Blank ~10-15% of key terms, ALWAYS provide 1-2 hint letters (first or last)
+- Medium: Blank ~15-25% of key terms, provide hints for ~50% of blanks
+- Hard: Blank ~25-35% of key terms, provide hints for ~20% of blanks
 
 WHAT TO BLANK:
 ✓ Technical terms and vocabulary
@@ -252,10 +252,16 @@ NEVER BLANK:
 ✗ Structural words with no semantic meaning
 ✗ Headings or section titles (keep these intact for structure)
 
-BLANK FORMAT:
-- Replace words with underscores: "___" or "______"
-- For hints, show first and/or last letter(s) depending on difficulty: "m___" or "mi____" or "___y" or "c_____x"
-- Match underscore length roughly to word length
+BLANK FORMAT - VERY IMPORTANT:
+- Use TWO underscores per missing letter for handwriting space
+- Short words (3-5 letters): "______" to "__________" (6-10 underscores)
+- Medium words (6-8 letters): "____________" to "________________" (12-16 underscores)
+- Long words (9+ letters): "________________" or longer (18+ underscores)
+- For hints, keep the hint letter(s) and use underscores for the rest:
+  * "m__________" (for "mitochondria" with first letter hint)
+  * "__________a" (for "mitochondria" with last letter hint)
+  * "c____________x" (for "complex" with first and last letters)
+- DO NOT use just "___" for any word - blanks must be proportional to word length
 
 Return a JSON object with this structure:
 {{

@@ -34,20 +34,20 @@ The LLM strategically blanks out terms based on difficulty level:
 #### Easy (10-15% blanking)
 - Fewer blanks overall
 - Focus on most critical terminology
-- Provide 1-2 starting letters as hints
-- Example: "The m_____ is the powerhouse of the cell"
+- ALWAYS provide 1-2 hint letters (first or last)
+- Example: "The m____________________ is the powerhouse of the cell"
 
 #### Medium (15-25% blanking)
 - Moderate number of blanks
 - Mix of key terms and supporting concepts
-- Occasional first-letter hints
-- Example: "The mitochondria is the p_______ of the ___"
+- Provide hints for ~50% of blanks
+- Example: "The mitochondria is the p________________ of the ____________"
 
 #### Hard (25-35% blanking)
 - More aggressive blanking
 - Most key terms are blanked
-- Minimal or no hints
-- Example: "The __________ is the _________ of the ____"
+- Provide hints for ~20% of blanks
+- Example: "The ____________________ is the __________________ of the ________"
 
 ### What Gets Blanked
 
@@ -117,9 +117,10 @@ The LLM returns a JSON object with this structure:
 
 **Answer Key Section:**
 - Separate pages at the end
-- Numbered list of answers in order
-- Optional context snippets for each answer
-- Easy reference for self-checking
+- Flowing paragraph format with answers separated by 4 spaces
+- NO numbered list, NO context or supplemental info
+- Just the answer words in order, easy to scan
+- Example: "mitochondria    powerhouse    cell    energy    ATP    ..."
 
 **Use Case:** Best for comprehensive study, take-home quizzes, self-paced learning
 
@@ -290,15 +291,20 @@ A well-generated quiz should:
 ## Version History
 
 - **v1.0** (Initial): Numbered question-based quizzes
-- **v2.0** (Current): Full-document cloze deletion format
+- **v2.0**: Full-document cloze deletion format
   - Complete document replication
   - Paragraph-based structure
   - Enhanced PDF rendering
   - Full Page as default
   - Dynamic token allocation
+- **v2.1** (Current): Handwriting-optimized format
+  - Proportional blank sizing (2 underscores per letter)
+  - Mandatory hint letters based on difficulty
+  - Simplified answer key (flowing paragraphs, 4-space separation)
+  - Optimized for handwritten quiz taking
 
 ---
 
-**Document Version:** 2.0
-**Last Updated:** December 17, 2024
+**Document Version:** 2.1
+**Last Updated:** December 18, 2024
 **Status:** Active Implementation
