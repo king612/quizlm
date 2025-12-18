@@ -201,8 +201,18 @@ Be specific and detailed. This information will be used to generate new quizzes 
         # Calculate max tokens based on content length
         # Claude 3 Haiku limit: 4096 tokens output
         # Claude 3.5 Sonnet limit: 8192 tokens output (when account upgraded)
+        # Need headroom for JSON structure, so use conservative estimate
         content_length = len(source_content)
-        max_tokens = min(4096, max(2000, int(content_length * 0.5)))
+
+        # For Haiku with 4K limit, be very conservative
+        # Rule of thumb: ~4 chars per token, plus JSON overhead
+        estimated_tokens_needed = int(content_length / 3) + 500  # +500 for JSON structure
+        max_tokens = min(4096, max(2000, estimated_tokens_needed))
+
+        # Warn if content might be too large
+        if estimated_tokens_needed > 3800:
+            print(f"WARNING: Source document is large ({content_length} chars). Output may be truncated.")
+            print(f"Consider using a shorter document or upgrading to Claude 3.5 Sonnet (8K output limit).")
 
         print(f"Generating quiz with max_tokens={max_tokens} for content length={content_length}")
 
@@ -296,5 +306,29 @@ IMPORTANT:
         try:
             return self._extract_json_from_response(content)
         except json.JSONDecodeError as e:
-            raise ValueError(f"Failed to parse LLM response as JSON: {e}\nResponse: {content[:500]}")
+            # Check if response was likely truncated (multiple indicators)
+            is_truncated = (
+                len(content) > 2500 or  # Substantial response
+                not content.rstrip().endswith("}") or  # Doesn't end with closing brace
+                '"answer_key"' not in content  # Missing expected key
+            )
+
+            if is_truncated:
+                raise ValueError(
+                    f"❌ OUTPUT TRUNCATED - Document Too Large\n\n"
+                    f"The quiz generation hit Claude Haiku's 4,096 token output limit.\n"
+                    f"Your source content was too large to generate a complete quiz.\n\n"
+                    f"📏 RECOMMENDED LIMITS:\n"
+                    f"  • For pasted text: ~2,500-3,000 characters (≈ 1-2 pages)\n"
+                    f"  • For PDF files: 2-3 pages maximum\n\n"
+                    f"💡 SOLUTIONS:\n"
+                    f"  1. Reduce your source content by 30-50%\n"
+                    f"  2. Split into multiple smaller sections\n"
+                    f"  3. Use Easy difficulty (fewer blanks = less output)\n"
+                    f"  4. Wait for Claude 3.5 Sonnet access (2x capacity)\n\n"
+                    f"Technical: Hit {max_tokens} token limit\n"
+                    f"Error: {e}"
+                )
+            else:
+                raise ValueError(f"Failed to parse LLM response as JSON: {e}\nResponse: {content[:500]}")
 

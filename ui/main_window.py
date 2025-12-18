@@ -195,14 +195,39 @@ class MainWindow:
         )
         input_label.pack(pady=(10, 5), padx=10, anchor="w")
 
-        # File upload button
+        # File upload section
+        file_frame = ctk.CTkFrame(left_panel, fg_color="transparent")
+        file_frame.pack(pady=5, padx=10, fill="x")
+
         upload_btn = ctk.CTkButton(
-            left_panel,
+            file_frame,
             text="📁 Upload File (PDF, DOCX, Image, TXT)",
             command=self._upload_source_file,
             height=40
         )
-        upload_btn.pack(pady=5, padx=10, fill="x")
+        upload_btn.pack(side="left", fill="x", expand=True, padx=(0, 5))
+
+        # Clear file button
+        self.clear_file_btn = ctk.CTkButton(
+            file_frame,
+            text="✕",
+            command=self._clear_source_file,
+            height=40,
+            width=40,
+            fg_color="#ff6b6b",
+            hover_color="#ff5252"
+        )
+        self.clear_file_btn.pack(side="left")
+        self.clear_file_btn.pack_forget()  # Hidden initially
+
+        # File status label
+        self.file_status_label = ctk.CTkLabel(
+            left_panel,
+            text="No file selected",
+            font=ctk.CTkFont(size=10),
+            text_color="gray"
+        )
+        self.file_status_label.pack(pady=(5, 0))
 
         # Or text input
         or_label = ctk.CTkLabel(left_panel, text="— or paste text —")
@@ -211,6 +236,16 @@ class MainWindow:
         # Text input area
         self.text_input = ctk.CTkTextbox(left_panel, height=300)
         self.text_input.pack(pady=5, padx=10, fill="both", expand=True)
+        self.text_input.bind("<KeyRelease>", self._update_char_count)
+
+        # Character counter
+        self.char_count_label = ctk.CTkLabel(
+            left_panel,
+            text="0 characters (recommended: < 3,000 for Haiku)",
+            font=ctk.CTkFont(size=10),
+            text_color="gray"
+        )
+        self.char_count_label.pack(pady=(2, 5), padx=10, anchor="e")
 
         # Quiz name input
         name_frame = ctk.CTkFrame(left_panel, fg_color="transparent")
@@ -401,10 +436,49 @@ class MainWindow:
 
         if filename:
             self.current_source_file = Path(filename)
+            self.file_status_label.configure(
+                text=f"📎 File: {self.current_source_file.name}",
+                text_color="#4a9eff"
+            )
+            self.clear_file_btn.pack(side="left")  # Show clear button
             self.status_label.configure(
                 text=f"Loaded: {self.current_source_file.name}"
             )
             self.unsaved_changes = True
+
+    def _clear_source_file(self):
+        """Clear the uploaded source file"""
+        self.current_source_file = None
+        self.file_status_label.configure(
+            text="No file selected",
+            text_color="gray"
+        )
+        self.clear_file_btn.pack_forget()  # Hide clear button
+        self.status_label.configure(text="Ready to generate quiz")
+
+    def _update_char_count(self, event=None):
+        """Update character count label"""
+        text_content = self.text_input.get("1.0", "end-1c")
+        char_count = len(text_content)
+
+        # Color code based on size
+        if char_count == 0:
+            color = "gray"
+            status = "recommended: < 3,000 for Haiku"
+        elif char_count < 2500:
+            color = "#51cf66"  # Green
+            status = "good size ✓"
+        elif char_count < 3500:
+            color = "#ffd43b"  # Yellow
+            status = "getting large ⚠"
+        else:
+            color = "#ff6b6b"  # Red
+            status = "too large! may truncate ✗"
+
+        self.char_count_label.configure(
+            text=f"{char_count:,} characters ({status})",
+            text_color=color
+        )
 
     def _generate_quiz(self):
         """Generate a quiz from current source material"""
@@ -414,10 +488,23 @@ class MainWindow:
             messagebox.showerror("Error", "Please enter a quiz name")
             return
 
-        # Get source material
+        # Get source material - prioritize pasted text if present
         text_content = self.text_input.get("1.0", "end-1c").strip()
 
-        if not text_content and not self.current_source_file:
+        # Determine source priority: text takes precedence if present
+        use_file = None
+        use_text = None
+
+        if text_content:
+            # User has pasted text - use that
+            use_text = text_content
+            source_description = "pasted text"
+        elif self.current_source_file:
+            # No pasted text, use uploaded file
+            use_file = self.current_source_file
+            source_description = f"file: {self.current_source_file.name}"
+        else:
+            # No source material at all
             messagebox.showerror("Error", "Please provide source material (text or file)")
             return
 
@@ -426,7 +513,7 @@ class MainWindow:
         quiz_style = self.quiz_style_var.get()
 
         # Update status
-        self.status_label.configure(text="Generating quiz...")
+        self.status_label.configure(text=f"Generating quiz from {source_description}...")
         self.generate_btn.configure(state="disabled")
         self.root.update()
 
@@ -434,8 +521,8 @@ class MainWindow:
             # Generate quiz
             output_path = self.quiz_generator.generate_quiz(
                 quiz_name=quiz_name,
-                source_file=self.current_source_file,
-                source_text=text_content if text_content else None,
+                source_file=use_file,
+                source_text=use_text,
                 difficulty=difficulty,
                 quiz_style=quiz_style
             )

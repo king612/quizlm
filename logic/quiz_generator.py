@@ -66,8 +66,16 @@ class QuizGenerator:
             )
 
         # Log content length for debugging
-        print(f"Extracted content length: {len(content)} characters")
+        content_length = len(content)
+        print(f"Extracted content length: {content_length} characters")
         print(f"First 200 chars: {content[:200]}")
+
+        # Warn about size limits (Claude Haiku has 4K output limit)
+        if content_length > 10000:
+            print(f"\n⚠️  WARNING: Large document detected ({content_length} chars)")
+            print(f"   Claude Haiku's 4K output limit may truncate the quiz.")
+            print(f"   Recommended: Use documents under 8000 characters (~3-4 pages)")
+            print(f"   Or split into multiple smaller documents.\n")
 
         # Load style information from training
         style_info = self._load_style_info()
