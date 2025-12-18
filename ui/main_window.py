@@ -132,6 +132,12 @@ class MainWindow:
         self._setup_ui()
         self._bind_events()
 
+        # Bring window to front
+        self.root.lift()
+        self.root.attributes('-topmost', True)
+        self.root.after(100, lambda: self.root.attributes('-topmost', False))
+        self.root.focus_force()
+
     def _setup_ui(self):
         """Setup the user interface"""
         # Main container
