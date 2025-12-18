@@ -13,6 +13,86 @@ from logic.document_processor import DocumentProcessor
 from config import Config
 
 
+class ErrorDialog(ctk.CTkToplevel):
+    """Custom error dialog with copy-to-clipboard functionality"""
+
+    def __init__(self, parent, title: str, message: str):
+        super().__init__(parent)
+
+        self.title(title)
+        self.geometry("600x400")
+        self.resizable(True, True)
+
+        # Make modal
+        self.transient(parent)
+        self.grab_set()
+
+        # Main frame
+        main_frame = ctk.CTkFrame(self)
+        main_frame.pack(fill="both", expand=True, padx=20, pady=20)
+
+        # Title with error icon
+        title_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
+        title_frame.pack(fill="x", pady=(0, 10))
+
+        error_label = ctk.CTkLabel(
+            title_frame,
+            text=f"❌ {title}",
+            font=ctk.CTkFont(size=16, weight="bold"),
+            text_color="#ff6b6b"
+        )
+        error_label.pack(anchor="w")
+
+        # Error message in scrollable textbox
+        self.textbox = ctk.CTkTextbox(
+            main_frame,
+            wrap="word",
+            font=ctk.CTkFont(size=12)
+        )
+        self.textbox.pack(fill="both", expand=True, pady=(0, 10))
+        self.textbox.insert("1.0", message)
+        self.textbox.configure(state="disabled")  # Read-only
+
+        # Button frame
+        button_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
+        button_frame.pack(fill="x")
+
+        # Copy button
+        copy_btn = ctk.CTkButton(
+            button_frame,
+            text="📋 Copy to Clipboard",
+            command=lambda: self._copy_to_clipboard(message),
+            width=150,
+            fg_color="#4a9eff",
+            hover_color="#3a7edf"
+        )
+        copy_btn.pack(side="left", padx=(0, 10))
+
+        # OK button
+        ok_btn = ctk.CTkButton(
+            button_frame,
+            text="OK",
+            command=self.destroy,
+            width=100
+        )
+        ok_btn.pack(side="right")
+
+        # Center on parent
+        self.update_idletasks()
+        x = parent.winfo_x() + (parent.winfo_width() // 2) - (self.winfo_width() // 2)
+        y = parent.winfo_y() + (parent.winfo_height() // 2) - (self.winfo_height() // 2)
+        self.geometry(f"+{x}+{y}")
+
+    def _copy_to_clipboard(self, text: str):
+        """Copy text to clipboard"""
+        self.clipboard_clear()
+        self.clipboard_append(text)
+        self.update()
+
+        # Show brief confirmation
+        messagebox.showinfo("Copied", "Error message copied to clipboard!", parent=self)
+
+
 class MainWindow:
     """Main application window with training and generation modes"""
 
@@ -29,7 +109,19 @@ class MainWindow:
 
         self.root = ctk.CTk()
         self.root.title("QuizLM - Quiz Generator")
-        self.root.geometry("1000x700")
+
+        # Set window size
+        window_width = 1000
+        window_height = 700
+
+        # Calculate center position
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+        center_x = int((screen_width - window_width) / 2)
+        center_y = int((screen_height - window_height) / 2)
+
+        # Set geometry with centered position
+        self.root.geometry(f"{window_width}x{window_height}+{center_x}+{center_y}")
 
         # Application state
         self.current_mode = "generate"  # "generate" or "train"
@@ -350,8 +442,9 @@ class MainWindow:
             self.unsaved_changes = False
 
         except Exception as e:
-            self.status_label.configure(text=f"Error: {str(e)}")
-            messagebox.showerror("Error", f"Failed to generate quiz:\n{str(e)}")
+            error_message = f"Failed to generate quiz:\n\n{str(e)}"
+            self.status_label.configure(text=f"Error: {str(e)[:50]}...")
+            ErrorDialog(self.root, "Quiz Generation Error", error_message)
 
         finally:
             self.generate_btn.configure(state="normal")
@@ -408,7 +501,8 @@ class MainWindow:
                     messagebox.showinfo("Success", success_msg)
 
             except Exception as e:
-                messagebox.showerror("Error", f"Failed to add training file:\n{str(e)}")
+                error_message = f"Failed to add training file:\n\n{str(e)}"
+                ErrorDialog(self.root, "Training File Error", error_message)
 
     def _train_model(self):
         """Train the model on training images"""
@@ -416,7 +510,8 @@ class MainWindow:
             self.model_trainer.train_model()
             messagebox.showinfo("Success", "Model trained successfully!")
         except Exception as e:
-            messagebox.showerror("Error", f"Failed to train model:\n{str(e)}")
+            error_message = f"Failed to train model:\n\n{str(e)}"
+            ErrorDialog(self.root, "Model Training Error", error_message)
 
     def _refresh_training_images_list(self):
         """Refresh the list of training images"""

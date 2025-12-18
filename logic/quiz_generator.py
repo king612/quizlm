@@ -58,6 +58,17 @@ class QuizGenerator:
         else:
             content = source_text
 
+        # Validate content
+        if not content or not content.strip():
+            raise ValueError(
+                "Failed to extract content from source document. "
+                "The file may be empty, corrupted, or in an unsupported format."
+            )
+
+        # Log content length for debugging
+        print(f"Extracted content length: {len(content)} characters")
+        print(f"First 200 chars: {content[:200]}")
+
         # Load style information from training
         style_info = self._load_style_info()
 

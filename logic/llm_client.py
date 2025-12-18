@@ -75,6 +75,13 @@ class LLMClient:
             json_start = text.find("```json") + 7
             json_end = text.find("```", json_start)
             text = text[json_start:json_end].strip()
+        else:
+            # Look for JSON object by finding first { and last }
+            first_brace = text.find("{")
+            last_brace = text.rfind("}")
+
+            if first_brace != -1 and last_brace != -1 and last_brace > first_brace:
+                text = text[first_brace:last_brace + 1].strip()
 
         return json.loads(text)
 
@@ -187,11 +194,17 @@ Be specific and detailed. This information will be used to generate new quizzes 
         Returns:
             Dictionary with quiz paragraphs and answer key
         """
+        # Validate source content
+        if not source_content or not source_content.strip():
+            raise ValueError("Source content is empty or invalid")
+
         # Calculate max tokens based on content length
         # Claude 3 Haiku limit: 4096 tokens output
         # Claude 3.5 Sonnet limit: 8192 tokens output (when account upgraded)
         content_length = len(source_content)
         max_tokens = min(4096, max(2000, int(content_length * 0.5)))
+
+        print(f"Generating quiz with max_tokens={max_tokens} for content length={content_length}")
 
         prompt = f"""You are a quiz generator that creates cloze-deletion study materials. Your task is to transform the ENTIRE source document into a quiz version by strategically blanking out key terms throughout.
 
@@ -251,7 +264,9 @@ Return a JSON object with this structure:
   ]
 }}
 
-IMPORTANT: The paragraphs array should contain ALL content from the source document with blanks inserted throughout. Do not condense or summarize - replicate the full text."""
+IMPORTANT:
+1. The paragraphs array should contain ALL content from the source document with blanks inserted throughout. Do not condense or summarize - replicate the full text.
+2. Return ONLY the JSON object, with no explanatory text before or after it. Do not include phrases like "Here is..." or any other preamble."""
 
         if self.provider == "claude":
             response = self.client.messages.create(
