@@ -185,50 +185,76 @@ Be specific and detailed. This information will be used to generate new quizzes 
             style_info: Style information from training
 
         Returns:
-            Dictionary with quiz questions and answers
+            Dictionary with quiz paragraphs and answer key
         """
-        prompt = f"""You are an expert quiz generator. Create a fill-in-the-blank quiz from the following source material.
+        # Calculate max tokens based on content length
+        content_length = len(source_content)
+        max_tokens = min(16000, max(4000, content_length * 2))
+
+        prompt = f"""You are a quiz generator that creates cloze-deletion study materials. Your task is to transform the ENTIRE source document into a quiz version by strategically blanking out key terms throughout.
 
 SOURCE MATERIAL:
-{source_content[:3000]}  # Limit to avoid token limits
+{source_content}
 
 STYLE GUIDELINES:
 {json.dumps(style_info, indent=2)}
 
 DIFFICULTY: {difficulty}
 
-REQUIREMENTS:
-1. Create fill-in-the-blank questions by replacing key words with blanks
-2. Each blank should be underscores matching the word length
-3. For hints, you may include first/last letters based on difficulty:
-   - Easy: More hints (1-2 starting letters), fewer blanks overall
-   - Medium: Occasional first letter hints, moderate number of blanks
-   - Hard: Few or no hints, more blanks
-4. Never blank out: articles (a, an, the), prepositions, conjunctions, or meaningless common words
-5. Prioritize blanking: nouns with semantic meaning, key concepts, technical terms, important verbs/adjectives
-6. Never blank words in headings or titles
-7. For each blank, provide the answer
+CRITICAL REQUIREMENTS:
+1. REPLICATE THE ENTIRE SOURCE DOCUMENT - Your output should be a full-text version of the source with blanks inserted
+2. PRESERVE STRUCTURE - Keep all paragraphs, sections, headings, and organization from the original
+3. PRESERVE FORMATTING - Maintain line breaks, paragraph breaks, lists, and document flow
+4. DO NOT SUMMARIZE - Include all content from the source, not just selected portions
+5. DO NOT NUMBER AS QUESTIONS - This is continuous text with blanks, not a numbered question list
+
+BLANKING STRATEGY:
+- Easy: Blank ~10-15% of key terms, provide first or last 1-2 letters as hints
+- Medium: Blank ~15-25% of key terms, occasional first or last letter hints
+- Hard: Blank ~25-35% of key terms, minimal hints
+
+WHAT TO BLANK:
+✓ Technical terms and vocabulary
+✓ Key concepts and important nouns
+✓ Significant verbs and descriptive adjectives
+✓ Names of people, places, processes
+✓ Numbers and quantities (when meaningful)
+
+NEVER BLANK:
+✗ Articles (a, an, the)
+✗ Common prepositions (in, on, at, to, from)
+✗ Common conjunctions (and, but, or)
+✗ Structural words with no semantic meaning
+✗ Headings or section titles (keep these intact for structure)
+
+BLANK FORMAT:
+- Replace words with underscores: "___" or "______"
+- For hints, show first and/or last letter(s) depending on difficulty: "m___" or "mi____" or "___y" or "c_____x"
+- Match underscore length roughly to word length
 
 Return a JSON object with this structure:
 {{
-  "quiz_title": "Quiz title based on content",
-  "questions": [
+  "quiz_title": "Title from source document",
+  "paragraphs": [
     {{
-      "text": "The ___ is the powerhouse of the cell.",
-      "blank_word": "mitochondria",
-      "hint_letters": "m",
-      "answer": "mitochondria",
-      "position": "word position in original text"
+      "text": "Full paragraph text with ___ inserted for blanked words. Keep all original sentences and structure.",
+      "section_heading": "Section name if applicable, or null"
+    }}
+  ],
+  "answer_key": [
+    {{
+      "answer": "the blanked word",
+      "context": "brief surrounding text for context"
     }}
   ]
 }}
 
-Generate a high-quality, educationally valuable quiz. Return ONLY the JSON object."""
+IMPORTANT: The paragraphs array should contain ALL content from the source document with blanks inserted throughout. Do not condense or summarize - replicate the full text."""
 
         if self.provider == "claude":
             response = self.client.messages.create(
                 model="claude-3-haiku-20240307",  # Using Haiku - upgrade account for Sonnet/Opus
-                max_tokens=4000,
+                max_tokens=max_tokens,
                 messages=[{
                     "role": "user",
                     "content": prompt

@@ -1,14 +1,16 @@
-# QuizLM - Automated Quiz Generator
+# QuizLM - Full-Document Quiz Generator
 
-A local-only Python application that generates fill-in-the-blank quizzes from source documents (text, PDF, Word, images) and learns your quiz style from handwritten examples.
+A local-only Python application that generates comprehensive cloze-deletion study materials by replicating entire source documents with strategic blanks for key terms. Uses Vision-Language Models to learn your quiz style from handwritten examples.
 
 ## Features
 
-- 🎯 **Generate Quizzes**: Create fill-in-the-blank quizzes from any text, PDF, Word doc, or image
-- 📚 **Style Learning**: Train on your handwritten quiz examples to match your style
+- 📄 **Full Document Replication**: Transforms entire documents into study materials, not just excerpts
+- 🎯 **Smart Blanking**: Strategically blanks 10-35% of key terms based on difficulty
+- 📚 **Style Learning**: Train on handwritten quiz examples (images or PDFs) to match your format
 - 📊 **Difficulty Levels**: Easy, Medium, and Hard quiz generation
-- 📄 **PDF Output**: Beautiful two-column PDFs (quiz + answers side-by-side)
-- 🖥️ **Modern UI**: Clean, dark-mode interface with drag-and-drop support
+- 📑 **Two Layout Options**: Full Page (separate answer key) or Split Page (side-by-side)
+- 📖 **Multi-Page Output**: Generates comprehensive study materials preserving document structure
+- 🖥️ **Modern UI**: Clean, dark-mode interface with intuitive controls
 
 ## Architecture
 

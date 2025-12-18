@@ -158,10 +158,10 @@ class MainWindow:
         style_label = ctk.CTkLabel(style_frame, text="Quiz Layout:")
         style_label.pack(anchor="w", pady=(0, 5))
 
-        self.quiz_style_var = ctk.StringVar(value="Split Page")
+        self.quiz_style_var = ctk.StringVar(value="Full Page")
         style_selector = ctk.CTkSegmentedButton(
             style_frame,
-            values=["Split Page", "Full Page"],
+            values=["Full Page", "Split Page"],
             variable=self.quiz_style_var
         )
         style_selector.pack(fill="x")

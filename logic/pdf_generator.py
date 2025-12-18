@@ -65,7 +65,7 @@ class PDFGenerator:
         width, height = letter
 
         # Set up fonts
-        c.setFont("Helvetica", 12)
+        c.setFont("Helvetica", 11)
 
         # Margins
         margin = 0.5 * inch
@@ -92,45 +92,74 @@ class PDFGenerator:
         y_pos -= 20
 
         # Reset to normal font
-        c.setFont("Helvetica", 12)
+        c.setFont("Helvetica", 11)
 
-        # Process questions
-        questions = quiz_data.get("questions", [])
-        question_num = 1
+        # Process paragraphs (new format) or fallback to questions (old format)
+        paragraphs = quiz_data.get("paragraphs", [])
+        answer_key = quiz_data.get("answer_key", [])
 
-        for q in questions:
-            # Check if we need a new page
-            if y_pos < margin + 50:
-                c.showPage()
-                y_pos = height - margin
-                c.setFont("Helvetica", 12)
+        if not paragraphs:  # Fallback to old question format
+            paragraphs = [{"text": q.get("text", ""), "section_heading": None}
+                         for q in quiz_data.get("questions", [])]
+            answer_key = [{"answer": q.get("answer", ""), "context": ""}
+                         for q in quiz_data.get("questions", [])]
 
-                # Redraw center line on new page
-                c.setStrokeColor(colors.lightgrey)
-                c.setLineWidth(0.5)
-                c.line(center_x, margin, center_x, height - margin)
-                c.setStrokeColor(colors.black)
+        answer_index = 0
 
-            # Quiz text (left side)
-            quiz_text = f"{question_num}. {q['text']}"
+        for para in paragraphs:
+            # Section heading if present
+            if para.get("section_heading"):
+                c.setFont("Helvetica-Bold", 12)
+                if y_pos < margin + 70:
+                    c.showPage()
+                    y_pos = height - margin
+                    c.setStrokeColor(colors.lightgrey)
+                    c.setLineWidth(0.5)
+                    c.line(center_x, margin, center_x, height - margin)
+                    c.setStrokeColor(colors.black)
 
-            # Word wrap for left side
-            left_width = center_x - margin - 10
-            wrapped_quiz = self._wrap_text(quiz_text, left_width, c)
+                c.drawString(margin, y_pos, para["section_heading"])
+                y_pos -= 20
+                c.setFont("Helvetica", 11)
 
-            # Draw quiz questions
-            quiz_y = y_pos
+            # Word wrap for left side (quiz text)
+            left_width = center_x - margin - 15
+            quiz_text = para["text"]
+            wrapped_quiz = self._wrap_text(quiz_text, left_width, c, 11)
+
+            # Count blanks in this paragraph
+            blank_count = quiz_text.count("___")
+
+            # Draw quiz text
+            start_y = y_pos
             for line in wrapped_quiz:
-                c.drawString(margin, quiz_y, line)
-                quiz_y -= 15
+                if y_pos < margin + 30:
+                    c.showPage()
+                    y_pos = height - margin
+                    c.setFont("Helvetica", 11)
+                    c.setStrokeColor(colors.lightgrey)
+                    c.setLineWidth(0.5)
+                    c.line(center_x, margin, center_x, height - margin)
+                    c.setStrokeColor(colors.black)
+                    start_y = y_pos
 
-            # Answer (right side)
-            answer_text = q['answer']
-            c.drawString(center_x + 10, y_pos, answer_text)
+                c.drawString(margin, y_pos, line)
+                y_pos -= 14
 
-            # Move to next question
-            y_pos = quiz_y - 10
-            question_num += 1
+            # Draw corresponding answers on right side
+            answer_y = start_y
+            for _ in range(blank_count):
+                if answer_index < len(answer_key):
+                    if answer_y < margin + 30:
+                        # Continue on next page
+                        break
+                    answer = answer_key[answer_index]["answer"]
+                    c.drawString(center_x + 10, answer_y, answer)
+                    answer_y -= 14
+                    answer_index += 1
+
+            # Extra space between paragraphs
+            y_pos -= 8
 
         # Footer
         c.setFont("Helvetica", 8)
@@ -152,7 +181,7 @@ class PDFGenerator:
         width, height = letter
 
         # Set up fonts
-        c.setFont("Helvetica", 12)
+        c.setFont("Helvetica", 11)
 
         # Margins
         margin = 0.5 * inch
@@ -173,33 +202,47 @@ class PDFGenerator:
         y_pos -= 20
 
         # Reset to normal font
-        c.setFont("Helvetica", 12)
+        c.setFont("Helvetica", 11)
 
-        # Process questions (quiz only)
-        questions = quiz_data.get("questions", [])
-        question_num = 1
+        # Process paragraphs (new format) or fallback to questions (old format)
+        paragraphs = quiz_data.get("paragraphs", [])
+        answer_key = quiz_data.get("answer_key", [])
 
-        for q in questions:
-            # Check if we need a new page
-            if y_pos < margin + 50:
-                c.showPage()
-                y_pos = height - margin
-                c.setFont("Helvetica", 12)
+        if not paragraphs:  # Fallback to old question format
+            paragraphs = [{"text": q.get("text", ""), "section_heading": None}
+                         for q in quiz_data.get("questions", [])]
+            answer_key = [{"answer": q.get("answer", ""), "context": ""}
+                         for q in quiz_data.get("questions", [])]
 
-            # Quiz text (full width)
-            quiz_text = f"{question_num}. {q['text']}"
+        # Render quiz pages
+        for para in paragraphs:
+            # Section heading if present
+            if para.get("section_heading"):
+                c.setFont("Helvetica-Bold", 12)
+                if y_pos < margin + 70:
+                    c.showPage()
+                    y_pos = height - margin
+
+                c.drawString(margin, y_pos, para["section_heading"])
+                y_pos -= 20
+                c.setFont("Helvetica", 11)
 
             # Word wrap for full width
-            wrapped_quiz = self._wrap_text(quiz_text, full_width, c)
+            quiz_text = para["text"]
+            wrapped_quiz = self._wrap_text(quiz_text, full_width, c, 11)
 
-            # Draw quiz questions
+            # Draw quiz text
             for line in wrapped_quiz:
-                c.drawString(margin, y_pos, line)
-                y_pos -= 15
+                if y_pos < margin + 30:
+                    c.showPage()
+                    y_pos = height - margin
+                    c.setFont("Helvetica", 11)
 
-            # Extra spacing between questions
+                c.drawString(margin, y_pos, line)
+                y_pos -= 14
+
+            # Extra space between paragraphs
             y_pos -= 10
-            question_num += 1
 
         # Footer on quiz pages
         c.setFont("Helvetica", 8)
@@ -216,22 +259,38 @@ class PDFGenerator:
         y_pos -= 30
 
         # Reset to normal font
-        c.setFont("Helvetica", 12)
+        c.setFont("Helvetica", 11)
 
-        # List answers with padding for readability
-        question_num = 1
-        for q in questions:
+        # List answers in order
+        answer_num = 1
+        for ans in answer_key:
             # Check if we need a new page
-            if y_pos < margin + 30:
+            if y_pos < margin + 50:
                 c.showPage()
                 y_pos = height - margin
-                c.setFont("Helvetica", 12)
+                c.setFont("Helvetica", 11)
 
-            # Format: "1. ____ answer ____"
-            answer_text = f"{question_num}.    {q['answer']}"
-            c.drawString(margin, y_pos, answer_text)
-            y_pos -= 20
-            question_num += 1
+            # Format answer with context if available
+            answer = ans.get("answer", "")
+            context = ans.get("context", "")
+
+            if context:
+                answer_text = f"{answer_num}. {answer}  ({context})"
+            else:
+                answer_text = f"{answer_num}. {answer}"
+
+            # Wrap if too long
+            wrapped_answer = self._wrap_text(answer_text, full_width, c, 11)
+            for line in wrapped_answer:
+                if y_pos < margin + 30:
+                    c.showPage()
+                    y_pos = height - margin
+                    c.setFont("Helvetica", 11)
+                c.drawString(margin, y_pos, line)
+                y_pos -= 14
+
+            y_pos -= 6  # Small gap between answers
+            answer_num += 1
 
         # Footer on answer page
         c.setFont("Helvetica", 8)
@@ -240,7 +299,7 @@ class PDFGenerator:
         # Save PDF
         c.save()
 
-    def _wrap_text(self, text: str, max_width: float, canvas_obj) -> List[str]:
+    def _wrap_text(self, text: str, max_width: float, canvas_obj, font_size: int = 11) -> List[str]:
         """Wrap text to fit within max_width"""
         words = text.split()
         lines = []
@@ -248,7 +307,7 @@ class PDFGenerator:
 
         for word in words:
             test_line = ' '.join(current_line + [word])
-            text_width = canvas_obj.stringWidth(test_line, "Helvetica", 12)
+            text_width = canvas_obj.stringWidth(test_line, "Helvetica", font_size)
 
             if text_width <= max_width:
                 current_line.append(word)

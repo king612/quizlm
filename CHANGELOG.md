@@ -2,6 +2,47 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.0.0] - 2024-12-17
+
+### Major Changes - Full Document Cloze Deletion
+
+#### Changed
+- **BREAKING**: Completely redesigned quiz generation approach from numbered questions to full-document cloze deletion
+- Quiz now replicates ENTIRE source document with strategic blanks, not just selected questions
+- Changed default quiz style from "Split Page" to "Full Page"
+- Updated LLM prompt to generate complete document replicas with blanks throughout
+- Modified PDF generator to handle paragraph-based continuous text format
+- Updated answer key format to sequential numbered list with optional context
+
+#### Added
+- New `QUIZ_GENERATION_SPEC.md` documenting the full-document approach
+- Dynamic token allocation based on source document length (up to 16k tokens)
+- Support for multi-page quiz generation preserving original document structure
+- Section heading preservation in quiz output
+- Context snippets in answer key for better reference
+- Backward compatibility with old question-based format
+- PDF training image support with `pdf2image` integration
+- Environment variable loading with `python-dotenv` integration
+
+#### Technical Improvements
+- Enhanced PDF rendering with better typography (11pt font, 14pt line spacing)
+- Improved text wrapping for both Split Page and Full Page layouts
+- Better page break handling for long documents
+- More efficient answer key rendering with context
+
+#### Fixed
+- Claude API model compatibility (using claude-3-haiku-20240307)
+- API key persistence across sessions with .env file loading
+- Model name 404 errors resolved
+
+### Usage Impact
+- Quizzes now suitable for comprehensive document study, not just quick review
+- Multi-page output expected for most source documents
+- Answer keys can be extensive (50-200+ blanks depending on document length)
+- Better for educational contexts requiring full content coverage
+
+---
+
 ## [1.1.0] - 2025-12-16
 
 ### Added

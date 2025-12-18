@@ -101,17 +101,22 @@ class QuizGenerator:
         with open(style_file, 'r') as f:
             return json.load(f)
 
-    def _save_quiz_metadata(self, quiz_name: str, quiz_data: dict, difficulty: str, quiz_style: str = "Split Page"):
+    def _save_quiz_metadata(self, quiz_name: str, quiz_data: dict, difficulty: str, quiz_style: str = "Full Page"):
         """Save metadata about generated quiz"""
         metadata_dir = self.config.data_dir / "quiz_metadata"
         metadata_dir.mkdir(parents=True, exist_ok=True)
+
+        # Support both old (questions) and new (paragraphs) formats
+        num_items = len(quiz_data.get("paragraphs", quiz_data.get("questions", [])))
+        num_blanks = len(quiz_data.get("answer_key", quiz_data.get("questions", [])))
 
         metadata = {
             "name": quiz_name,
             "difficulty": difficulty,
             "quiz_style": quiz_style,
             "generated_at": datetime.now().isoformat(),
-            "num_questions": len(quiz_data.get("questions", [])),
+            "num_paragraphs": num_items,
+            "num_blanks": num_blanks,
         }
 
         metadata_file = metadata_dir / f"{quiz_name}.json"
