@@ -70,7 +70,7 @@ class MainWindow:
         title.pack(side="left", padx=10)
 
         # Mode toggle
-        self.mode_var = ctk.StringVar(value="generate")
+        self.mode_var = ctk.StringVar(value="Generate Mode")
         mode_toggle = ctk.CTkSegmentedButton(
             header_frame,
             values=["Generate Mode", "Training Mode"],

@@ -118,7 +118,7 @@ Be specific and detailed. This information will be used to generate new quizzes 
         if self.provider == "claude":
             response = self.client.messages.create(
                 model="claude-3-haiku-20240307",  # Using Haiku - upgrade account for Sonnet/Opus
-                max_tokens=5000,
+                max_tokens=4000,
                 messages=[{
                     "role": "user",
                     "content": [
@@ -188,8 +188,10 @@ Be specific and detailed. This information will be used to generate new quizzes 
             Dictionary with quiz paragraphs and answer key
         """
         # Calculate max tokens based on content length
+        # Claude 3 Haiku limit: 4096 tokens output
+        # Claude 3.5 Sonnet limit: 8192 tokens output (when account upgraded)
         content_length = len(source_content)
-        max_tokens = min(16000, max(4000, content_length * 2))
+        max_tokens = min(4096, max(2000, int(content_length * 0.5)))
 
         prompt = f"""You are a quiz generator that creates cloze-deletion study materials. Your task is to transform the ENTIRE source document into a quiz version by strategically blanking out key terms throughout.
 
