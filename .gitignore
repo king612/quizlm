@@ -42,8 +42,6 @@ env/
 
 # Data directories (user's actual quiz data)
 data/training_images/
-data/source_documents/
-data/quizzes/
 data/models/
 data/quiz_metadata/
 
