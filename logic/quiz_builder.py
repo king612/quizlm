@@ -39,64 +39,80 @@ class QuizBuilder:
                 - answer_key: List of answer dicts with answer, blank, position
                 - metadata: Stats about the quiz
         """
-        # Work with a copy of the source text
-        quiz_text = source_text
-        answer_key = []
-        blank_positions = []  # Track where we've made blanks
+        # Step 1: Collect ALL occurrences across ALL words
+        all_occurrences = []
 
-        # Sort words by importance (highest first) to handle overlaps better
-        sorted_words = sorted(
-            words_to_blank,
-            key=lambda x: x.get('importance', 0.5),
-            reverse=True
-        )
-
-        # Process each word
-        for word_info in sorted_words:
+        for word_info in words_to_blank:
             word = word_info.get('word', '')
             if not word:
                 continue
 
-            # Find all occurrences of this word
-            occurrences = self._find_word_occurrences(quiz_text, word)
+            # Find all occurrences of this word in original text
+            occurrences = self._find_word_occurrences(source_text, word)
 
             # Limit to max_occurrences_per_word
-            occurrences = occurrences[:max_occurrences_per_word]
-
-            # Replace each occurrence with a blank
-            for position, matched_word in occurrences:
-                # Skip if we've already blanked this position
-                if self._position_already_blanked(position, len(matched_word), blank_positions):
-                    continue
-
-                # Generate the blank with hint letters
-                blank = self._generate_blank_with_hint(matched_word)
-
-                # Replace in quiz text
-                before = quiz_text[:position]
-                after = quiz_text[position + len(matched_word):]
-                quiz_text = before + blank + after
-
-                # Track this blank position (adjust for length difference)
-                blank_positions.append((position, len(blank)))
-
-                # Add to answer key
-                answer_key.append({
-                    "answer": matched_word,
-                    "blank": blank,
-                    "position": position,
-                    "importance": word_info.get('importance', 0.5),
-                    "word_type": word_info.get('word_type', 'unknown')
+            for position, matched_word in occurrences[:max_occurrences_per_word]:
+                all_occurrences.append({
+                    'position': position,
+                    'length': len(matched_word),
+                    'matched_word': matched_word,
+                    'word_info': word_info,
+                    'importance': word_info.get('importance', 0.5)
                 })
 
-                # Adjust future positions (quiz_text is now longer/shorter)
-                length_diff = len(blank) - len(matched_word)
-                if length_diff != 0:
-                    # Update positions of future replacements
-                    occurrences = [
-                        (pos + length_diff if pos > position else pos, word)
-                        for pos, word in occurrences
-                    ]
+        # Step 2: Sort by position (DESCENDING - highest position first)
+        # This ensures we replace from end to beginning, avoiding position shifts
+        all_occurrences.sort(key=lambda x: x['position'], reverse=True)
+
+        # Step 3: Filter out overlapping positions
+        # (Check overlaps in the original positions, before any replacements)
+        filtered_occurrences = []
+        occupied_ranges = []
+
+        for occ in all_occurrences:
+            pos = occ['position']
+            length = occ['length']
+            end_pos = pos + length
+
+            # Check if this position overlaps with any already-selected position
+            overlaps = False
+            for occupied_start, occupied_end in occupied_ranges:
+                if (pos < occupied_end and end_pos > occupied_start):
+                    overlaps = True
+                    break
+
+            if not overlaps:
+                filtered_occurrences.append(occ)
+                occupied_ranges.append((pos, end_pos))
+
+        # Step 4: Replace from end to beginning (positions don't shift!)
+        quiz_text = source_text
+        answer_key = []
+
+        for occ in filtered_occurrences:
+            position = occ['position']
+            matched_word = occ['matched_word']
+            word_info = occ['word_info']
+
+            # Generate the blank with hint letters
+            blank = self._generate_blank_with_hint(matched_word)
+
+            # Replace in quiz text (positions are still valid since we work backwards)
+            before = quiz_text[:position]
+            after = quiz_text[position + len(matched_word):]
+            quiz_text = before + blank + after
+
+            # Add to answer key
+            answer_key.append({
+                "answer": matched_word,
+                "blank": blank,
+                "position": position,  # Original position in source text
+                "importance": word_info.get('importance', 0.5),
+                "word_type": word_info.get('word_type', 'unknown')
+            })
+
+        # Step 5: Sort answer key by position (ascending) for sequential order
+        answer_key.sort(key=lambda x: x['position'])
 
         # Calculate metadata
         original_word_count = len(source_text.split())
@@ -136,32 +152,6 @@ class QuizBuilder:
 
         return occurrences
 
-    def _position_already_blanked(
-        self,
-        position: int,
-        length: int,
-        blank_positions: List[Tuple[int, int]]
-    ) -> bool:
-        """
-        Check if a position overlaps with already-blanked text
-
-        Args:
-            position: Start position of potential blank
-            length: Length of word to blank
-            blank_positions: List of (start, length) for existing blanks
-
-        Returns:
-            True if position overlaps with existing blank
-        """
-        for blank_start, blank_length in blank_positions:
-            blank_end = blank_start + blank_length
-            word_end = position + length
-
-            # Check for overlap
-            if (position < blank_end and word_end > blank_start):
-                return True
-
-        return False
 
     def _generate_blank_with_hint(self, word: str) -> str:
         """
